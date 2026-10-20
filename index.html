@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>สต็อกสิ้นเปลือง BPL</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#F5F6F4; --surface:#FFFFFF; --sunken:#EEF0ED; --ink:#17201C; --muted:#5D6964; --line:#DFE3E0;
+  --in:#1E7556; --in-soft:#E2F1EA; --out:#A9540E; --out-soft:#FAEADB;
+  --warn:#A3313A; --warn-soft:#F7E2E3; --focus:#2C6BD6; --focus-soft:#E3ECFB; --shade:rgba(20,28,24,.42);
+  --f-display:"Anuphan","IBM Plex Sans Thai","Noto Sans Thai",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Thai","Noto Sans Thai","Leelawadee UI",system-ui,sans-serif;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121614; --surface:#1A201D; --sunken:#151A18; --ink:#E7ECE9; --muted:#9BA6A0; --line:#2B3430;
+  --in:#62C9A0; --in-soft:#17332A; --out:#F0A262; --out-soft:#3A2918;
+  --warn:#F08D93; --warn-soft:#3B1F22; --focus:#7FA9F5; --focus-soft:#1C2A44; --shade:rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121614; --surface:#1A201D; --sunken:#151A18; --ink:#E7ECE9; --muted:#9BA6A0; --line:#2B3430;
+  --in:#62C9A0; --in-soft:#17332A; --out:#F0A262; --out-soft:#3A2918;
+  --warn:#F08D93; --warn-soft:#3B1F22; --focus:#7FA9F5; --focus-soft:#1C2A44; --shade:rgba(0,0,0,.6); color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.3}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+a{color:var(--focus)}
+
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar{max-width:1180px;margin:0 auto;padding-block:12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:12px 16px;align-items:center;flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;margin-right:auto}
+.brand h1{font-size:19px}
+.brand span{font-size:12.5px;color:var(--muted)}
+.tabs{display:flex;gap:4px;background:var(--sunken);padding:4px;border-radius:10px}
+.tabs button{border:0;background:transparent;padding:7px 16px;border-radius:7px;font-weight:600;cursor:pointer;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.sync{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+
+main{max-width:1180px;margin:0 auto;padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+.page{display:flex;flex-direction:column;gap:28px}
+.demo{font-size:13px;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:8px 12px;background:var(--surface)}
+.demo b{color:var(--ink)}
+.err{font-size:14px;border-radius:10px;padding:10px 14px;background:var(--warn-soft);color:var(--warn);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+section{display:flex;flex-direction:column;gap:12px;min-width:0}
+.sec-head{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap}
+.sec-head h2{font-size:18px}
+.sec-head p{margin:0;color:var(--muted);font-size:13.5px}
+
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.act{display:flex;align-items:center;gap:14px;text-align:left;border:1px solid transparent;border-radius:var(--r);padding:18px 20px;cursor:pointer;transition:transform .12s}
+.act:hover{transform:translateY(-1px)}
+.act .plus{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-size:24px;font-weight:600;color:var(--surface)}
+.act strong{display:block;font-family:var(--f-display);font-size:18px}
+.act small{color:var(--muted);font-size:13px}
+.act.in{background:var(--in-soft)} .act.in .plus{background:var(--in)} .act.in strong{color:var(--in)}
+.act.out{background:var(--out-soft)} .act.out .plus{background:var(--out)} .act.out strong{color:var(--out)}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:2px;text-align:left;min-width:0}
+button.kpi{cursor:pointer}
+button.kpi:hover{border-color:var(--muted)}
+.kpi .lbl{font-size:13px;color:var(--muted);font-weight:500}
+.kpi .val{font-family:var(--f-display);font-size:30px;font-weight:700;line-height:1.2}
+.kpi .sub{font-size:12.5px;color:var(--muted)}
+.kpi .who{font-weight:600;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kpi.in .val{color:var(--in)} .kpi.out .val{color:var(--out)} .kpi.warn .val{color:var(--warn)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.chip{font-size:11.5px;border:1px solid var(--line);border-radius:999px;padding:1px 8px;background:var(--sunken);cursor:pointer}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-width:0}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px;border-bottom:1px solid var(--line)}
+.seg{display:flex;gap:2px;background:var(--sunken);padding:3px;border-radius:9px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.seg button.in[aria-pressed="true"]{color:var(--in)} .seg button.out[aria-pressed="true"]{color:var(--out)}
+.grow{flex:1}
+input[type=search],input[type=text],input[type=date],input[type=number],select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;min-width:0}
+input[type=search]{width:220px;max-width:100%}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:600;font-size:14px;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.solid{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.btn.in{background:var(--in);border-color:var(--in);color:var(--surface)}
+.btn.out{background:var(--out);border-color:var(--out);color:var(--surface)}
+.btn.danger{background:var(--warn);border-color:var(--warn);color:var(--surface)}
+.btn.sm{padding:3px 9px;font-size:12.5px;border-radius:6px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.link{background:none;border:0;padding:0;color:var(--focus);cursor:pointer;font-weight:500;text-decoration:underline;text-underline-offset:2px;font-size:14px}
+.dim{color:var(--muted)}
+
+.tbl-wrap{overflow:auto;max-height:540px}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:14px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;vertical-align:middle}
+th{position:sticky;top:0;background:var(--sunken);font-weight:600;font-size:13px;color:var(--muted);z-index:1}
+th.colgrp-in{color:var(--in)} th.colgrp-out{color:var(--out)}
+td.r,th.r{text-align:right}
+tr.job-start td{border-top:1px solid var(--line)}
+tbody tr:hover td{background:var(--sunken)}
+tr.off td{color:var(--muted);text-decoration:line-through}
+tr.off td:last-child{text-decoration:none}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:1px 9px;border-radius:999px}
+.pill.ok{background:var(--in-soft);color:var(--in)}
+.pill.wait{background:var(--out-soft);color:var(--out)}
+.pill.bad{background:var(--warn-soft);color:var(--warn)}
+.pill.blue{background:var(--focus-soft);color:var(--focus)}
+.pill.mute{background:var(--sunken);color:var(--muted)}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+
+.dash{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dash .panel{padding:16px;display:flex;flex-direction:column;gap:12px}
+.dash h3{font-size:15.5px}
+.bars{display:flex;flex-direction:column;gap:8px}
+.brow{display:grid;grid-template-columns:minmax(0,190px) 1fr 56px;gap:10px;align-items:center;font-size:13.5px}
+.brow .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.track{height:12px;background:var(--sunken);border-radius:4px;overflow:hidden}
+.fill{height:100%;border-radius:4px}
+.fill.in{background:var(--in)} .fill.out{background:var(--out)}
+.brow .v{text-align:right;font-weight:600}
+
+.rule{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+.rule span{display:flex;gap:6px;align-items:center}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+tr.br-first td{border-top:2px solid var(--line)}
+td.branch{font-weight:600}
+.hist td{background:var(--sunken);white-space:normal}
+.hist ul{margin:0;padding:4px 0 4px 18px;display:flex;flex-direction:column;gap:2px;font-size:13.5px}
+.tog{background:none;border:0;cursor:pointer;color:var(--muted);font-size:13px;padding:2px 4px}
+
+.overlay{position:fixed;inset:0;background:var(--shade);display:grid;place-items:center;z-index:20;padding:16px}
+.modal{background:var(--surface);border-radius:14px;width:min(600px,100%);max-height:92vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.m-head{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:1}
+.m-head h3{font-size:18px;margin-right:auto}
+.m-head .x{border:0;background:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1}
+.m-body{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.m-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;position:sticky;bottom:0;background:var(--surface)}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label,.field .lab{font-weight:600;font-size:13.5px}
+.field .hint{font-size:12.5px;color:var(--muted)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lines{display:flex;flex-direction:column;gap:6px}
+.line{display:grid;grid-template-columns:minmax(0,1fr) 96px 54px 30px;gap:6px;align-items:center}
+.line .u{font-size:13px;color:var(--muted)}
+.line .rm{border:0;background:none;color:var(--muted);cursor:pointer;font-size:18px}
+.newbr{font-size:12.5px;background:var(--out-soft);color:var(--out);border-radius:6px;padding:3px 8px;align-self:flex-start}
+.note{font-size:13.5px;background:var(--sunken);border-radius:8px;padding:9px 12px;color:var(--muted)}
+.note b{color:var(--ink)}
+.effect{font-size:14px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.effect .plus{color:var(--in);font-weight:600} .effect .minus{color:var(--warn);font-weight:600}
+textarea.tsv{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;width:100%;min-height:110px;white-space:pre;overflow:auto}
+.drop{border:1.5px dashed var(--line);border-radius:10px;padding:14px;text-align:center;font-size:13.5px;color:var(--muted)}
+.drop input{margin-top:6px;max-width:100%}
+.path{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;background:var(--sunken);padding:6px 10px;border-radius:6px;overflow-wrap:anywhere}
+.picks{display:flex;flex-wrap:wrap;gap:6px}
+.pick{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:4px 10px;font-size:13px;cursor:pointer;text-align:left}
+.pick[aria-pressed="true"]{border-color:var(--focus);background:var(--focus-soft)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:9px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
+
+@media (max-width:820px){.kpis{grid-template-columns:1fr 1fr}.dash{grid-template-columns:1fr}}
+@media (max-width:560px){
+  .actions{grid-template-columns:1fr}.row2{grid-template-columns:1fr}
+  .brow{grid-template-columns:minmax(0,120px) 1fr 48px}.kpi .val{font-size:25px}
+}
+@media (prefers-reduced-motion:reduce){.act{transition:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <div class="brand"><h1>สต็อกสิ้นเปลือง BPL</h1><span>21 BPL_BHUB-บางพลี · บันทึกรับ–ส่งวัสดุกับสาขาอื่น</span></div>
+    <div class="sync"><span id="sync-at">กำลังโหลด…</span><button class="btn sm" id="btn-reload">รีเฟรช</button></div>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-records" aria-selected="true">บันทึกรับ–ส่ง</button>
+      <button role="tab" id="tab-loans" aria-selected="false">ยืม–คืน</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="demo" id="demo-note" hidden><b>โหมดตัวอย่าง</b> · ยังไม่ได้ใส่ API_URL ข้อมูลในหน้านี้เป็นข้อมูลสมมติ กดลองได้ทุกปุ่ม แต่ไม่บันทึกลงชีตหรือไดรฟ์</div>
+  <div class="err" id="err" hidden></div>
+
+  <!-- ===== หน้า 1 : บันทึกรับ–ส่ง ===== -->
+  <div class="page" id="page-records">
+    <div class="actions">
+      <button class="act in" id="btn-new-in"><span class="plus">+</span><span><strong>บันทึกรับวัสดุเข้า</strong><small>ของเข้าจากสาขาอื่น / คลัง · แนบหลักฐานได้ (ไม่บังคับ)</small></span></button>
+      <button class="act out" id="btn-new-out"><span class="plus">+</span><span><strong>บันทึกส่งวัสดุออก</strong><small>ของออกให้สาขาอื่น · กดส่งสำเร็จพร้อมหลักฐานทีหลัง</small></span></button>
+    </div>
+
+    <section><div class="kpis" id="kpis"></div></section>
+
+    <section>
+      <div class="sec-head"><h2>ตารางบันทึก</h2><p>คอลัมน์เรียงเหมือนชีต Stock Consumable — คัดลอกแล้ววางใน Lark ได้ตรงช่อง</p></div>
+      <div class="panel">
+        <div class="toolbar">
+          <div class="seg" id="seg-type">
+            <button class="in" data-v="in" aria-pressed="true">รับเข้า</button>
+            <button class="out" data-v="out" aria-pressed="false">ส่งออก</button>
+            <button data-v="stock" aria-pressed="false">สต็อกคงเหลือ</button>
+          </div>
+          <select id="flt" aria-label="กรองสถานะ"></select>
+          <input type="search" id="q" placeholder="ค้นหา สาขา / วัสดุ / ใบงาน">
+          <span class="grow"></span>
+          <button class="btn" id="copy-all">คัดลอกทั้งตาราง</button>
+        </div>
+        <div class="tbl-wrap" id="tbl"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head"><h2>สถิติ</h2>
+        <div class="seg" id="seg-metric">
+          <button data-v="jobs" aria-pressed="true">นับเป็นใบงาน</button>
+          <button data-v="qty" aria-pressed="false">นับจำนวนของ</button>
+        </div>
+        <select id="dash-item" aria-label="เลือกวัสดุ" hidden></select>
+      </div>
+      <div class="dash">
+        <div class="panel"><h3>รับเข้าจากที่ไหนมากสุด</h3><div class="bars" id="bars-in"></div></div>
+        <div class="panel"><h3>ส่งออกไปที่ไหนมากสุด <span class="dim" style="font-weight:400;font-size:13px">(เฉพาะส่งสำเร็จ)</span></h3><div class="bars" id="bars-out"></div></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== หน้า 2 : ยืม–คืน ===== -->
+  <div class="page" id="page-loans" hidden>
+    <div class="rule">
+      <span><i class="dot" style="background:var(--out)"></i>ส่งออก (สำเร็จ) ให้สาขาไหน = สาขานั้น <b>ยืม</b></span>
+      <span><i class="dot" style="background:var(--in)"></i>รับเข้าจากสาขาไหน = สาขานั้น <b>คืน</b> (ทุกครั้ง)</span>
+      <span><i class="dot" style="background:var(--focus)"></i><b>คืนแทน</b> = ย้ายยอดคืนจากสาขาที่ส่งมา ไปให้สาขาที่ยืม · บันทึกรับเข้าไม่เปลี่ยน</span>
+    </div>
+
+    <section>
+      <div class="sec-head"><h2>ภาพรวมการยืม</h2>
+        <select id="loan-item" aria-label="เลือกวัสดุ"></select>
+        <span class="grow"></span>
+        <button class="btn solid" id="btn-adj">+ บันทึกคืนแทน</button>
+      </div>
+      <div class="kpis" id="loan-kpis"></div>
+    </section>
+
+    <section>
+      <div class="sec-head"><h2>ยืม–คืน แยกตามสาขา</h2>
+        <div class="seg" id="seg-loan">
+          <button data-v="open" aria-pressed="true">ยังค้าง</button>
+          <button data-v="over" aria-pressed="false">คืนเกิน</button>
+          <button data-v="all" aria-pressed="false">ทั้งหมด</button>
+        </div>
+        <input type="search" id="loan-q" placeholder="ค้นหาสาขา">
+        <p>กด ▸ เพื่อดูวันที่ยืม / คืน</p>
+      </div>
+      <div class="panel"><div class="tbl-wrap" id="loan-tbl"></div></div>
+    </section>
+
+    <section>
+      <div class="sec-head"><h2>ประวัติคืนแทน</h2><p>สาขาไหนคืนแทนให้สาขาไหน วันไหน</p>
+        <span class="grow"></span><input type="search" id="adj-q" placeholder="ค้นหาสาขา / วัสดุ"></div>
+      <div class="panel"><div class="tbl-wrap" id="adj-tbl"></div></div>
+    </section>
+  </div>
+</main>
+
+<datalist id="branches"></datalist>
+<datalist id="owers"></datalist>
+<div id="modal-root"></div>
+
+<script>
+// ใส่ URL ของ Apps Script Web app ตรงนี้ (ลงท้ายด้วย /exec) — เว้นว่าง = โหมดตัวอย่าง
+const API_URL = "https://script.google.com/macros/s/AKfycbxlwYDEqQ0TFPLd_ioj25Z8_T61VeswDiSn3EIFapn1n9JUygSB1etiFPx-qpgxx9-X/exec";
+
+(function(){
+const DEMO=!API_URL;
+const NO_EV="ไม่มีหลักฐาน";
+const ROOT_FOLDER="หลักฐานสต็อคสิ้นเปลืองสาขาอื่น";
+
+// ---------- utils ----------
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt=n=>Number(n).toLocaleString("en-US");
+const key=d=>{const p=String(d).split("/");return p.length===3?p[2]+p[1].padStart(2,"0")+p[0].padStart(2,"0"):String(d)};
+const isoToTh=iso=>{const[y,m,d]=iso.split("-");return `${d}/${m}/${y}`};
+const pad=n=>String(n).padStart(2,"0");
+const now=new Date();const TODAY=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+const hasEv=r=>/^(https?:|#demo)/.test(r.ev||"");
+const store={get(k){try{return localStorage.getItem(k)||""}catch(e){return ""}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+
+let DB={items:[],branches:[],records:[],adjs:[],at:""};
+let IT={},BR=new Set();
+function rebuild(){
+  IT={};DB.items.forEach(i=>IT[i.name]={code:i.code,unit:i.unit});
+  BR=new Set(DB.branches);
+  $("#branches").innerHTML=DB.branches.map(b=>`<option value="${esc(b)}">`).join("");
+  const opts=DB.items.map(i=>`<option>${esc(i.name)}</option>`).join("");
+  const di=$("#dash-item").value,li=$("#loan-item").value;
+  $("#dash-item").innerHTML=opts;if(di)$("#dash-item").value=di;
+  $("#loan-item").innerHTML=`<option value="">ทุกวัสดุ (รวมจำนวน)</option>`+opts;$("#loan-item").value=li||"";
+  $("#sync-at").textContent=DEMO?"โหมดตัวอย่าง":`อัปเดต ${DB.at}`;
+}
+const unitOf=n=>(IT[n]||{}).unit||"";
+const codeOf=n=>(IT[n]||{}).code||"";
+
+function toast(msg){document.querySelectorAll(".toast").forEach(x=>x.remove());const t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
+function copyText(txt,label){
+  const done=()=>toast(label||"คัดลอกแล้ว — ไปวางใน Lark ได้เลย");
+  const fallback=()=>{const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");done()}catch(e){toast("คัดลอกไม่ได้ ให้เลือกข้อความแล้วกด Ctrl+C")}ta.remove()};
+  try{navigator.clipboard.writeText(txt).then(done,fallback)}catch(e){fallback()}
+}
+const tsvLine=(r,[n,q])=>[r.date,codeOf(n),n,r.branch,q,unitOf(n),r.by,r.note].join("\t");
+function showErr(msg){const e=$("#err");if(!msg){e.hidden=true;return}e.hidden=false;e.innerHTML=`<span>${esc(msg)}</span><button class="btn sm" id="err-retry">ลองใหม่</button>`;$("#err-retry").onclick=load}
+async function busy(btn,label,fn){const t=btn.textContent;btn.disabled=true;btn.textContent=label;try{return await fn()}finally{btn.disabled=false;btn.textContent=t}}
+
+// ---------- files → base64 (ย่อรูปก่อนส่ง) ----------
+function readDataURL(f){return new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=no;r.readAsDataURL(f)})}
+async function toPayload(files){
+  const out=[];
+  for(const f of files){
+    let url,mime=f.type||"application/octet-stream",name=f.name;
+    if(mime.startsWith("image/")){
+      try{const bmp=await createImageBitmap(f);const s=Math.min(1,1600/Math.max(bmp.width,bmp.height));
+        const c=document.createElement("canvas");c.width=Math.round(bmp.width*s);c.height=Math.round(bmp.height*s);
+        c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);url=c.toDataURL("image/jpeg",.82);mime="image/jpeg";name=name.replace(/\.[^.]+$/,"")+".jpg";
+      }catch(e){url=await readDataURL(f)}
+    }else url=await readDataURL(f);
+    out.push({name,mime,data:url.split(",")[1]});
+  }
+  return out;
+}
+
+// ---------- API ----------
+async function load(){
+  showErr("");
+  if(DEMO){DB=demoData();$("#demo-note").hidden=false;rebuild();renderAll();return}
+  $("#sync-at").textContent="กำลังโหลด…";
+  try{const r=await fetch(API_URL,{method:"GET"});const j=await r.json();if(!j.ok)throw new Error(j.error);DB=j.data;rebuild();renderAll()}
+  catch(e){$("#sync-at").textContent="โหลดไม่สำเร็จ";showErr("โหลดข้อมูลจากชีตไม่ได้ ("+e.message+") · เช็กอินเทอร์เน็ต หรือ API_URL ว่าถูกต้องและ Deploy แบบ Anyone แล้ว")}
+}
+async function call(action,payload){
+  if(DEMO){const r=demoCall(action,payload);rebuild();renderAll();return r}
+  const res=await fetch(API_URL,{method:"POST",body:JSON.stringify(Object.assign({action},payload))});
+  const j=await res.json();
+  if(!j.ok)throw new Error(j.error||"บันทึกไม่สำเร็จ");
+  DB=j.data;rebuild();renderAll();return j;
+}
+$("#btn-reload").onclick=load;
+
+// ---------- tabs ----------
+function showPage(p){
+  $("#page-records").hidden=p!=="records";$("#page-loans").hidden=p!=="loans";
+  $("#tab-records").setAttribute("aria-selected",p==="records");$("#tab-loans").setAttribute("aria-selected",p==="loans");
+  store.set("stock_tab",p);
+}
+$("#tab-records").onclick=()=>showPage("records");
+$("#tab-loans").onclick=()=>showPage("loans");
+showPage(location.hash==="#loans"?"loans":location.hash==="#records"?"records":(store.get("stock_tab")||"records"));
+
+let view="in",filter="all",metric="jobs",loanMode="open";
+function seg(id,cb){document.querySelectorAll(`#${id} button`).forEach(b=>b.onclick=()=>{setSeg(id,b.dataset.v);cb(b.dataset.v)})}
+function setSeg(id,v){document.querySelectorAll(`#${id} button`).forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===v))}
+seg("seg-type",v=>{view=v;filter="all";renderTable()});
+seg("seg-metric",v=>{metric=v;$("#dash-item").hidden=v!=="qty";renderDash()});
+seg("seg-loan",v=>{loanMode=v;renderLoans()});
+$("#q").oninput=renderTable;
+$("#flt").onchange=e=>{filter=e.target.value;renderTable()};
+$("#dash-item").onchange=renderDash;
+$("#loan-item").onchange=renderLoans;
+$("#loan-q").oninput=renderLoans;
+$("#adj-q").oninput=renderAdjHist;
+
+// ---------- KPI ----------
+function renderKPI(){
+  const R=DB.records,ins=R.filter(r=>r.type==="in"),outs=R.filter(r=>r.type==="out");
+  const done=outs.filter(r=>r.status==="done"),pend=outs.filter(r=>r.status==="pending");
+  const noEv=R.filter(r=>r.status==="done"&&!hasEv(r)).sort((a,b)=>key(b.date).localeCompare(key(a.date)));
+  const lines=a=>a.reduce((s,r)=>s+r.lines.length,0);
+  const shown=noEv.slice(0,12);
+  $("#kpis").innerHTML=`
+   <div class="kpi in"><span class="lbl">รับเข้าทั้งหมด</span><span class="val num">${ins.length}</span><span class="sub">ใบงาน · ${lines(ins)} รายการวัสดุ</span></div>
+   <div class="kpi out"><span class="lbl">ส่งออกทั้งหมด</span><span class="val num">${done.length}</span><span class="sub">ใบงานที่กดส่งสำเร็จแล้ว · ${lines(done)} รายการ</span></div>
+   <button class="kpi" id="k-pend"><span class="lbl">รอกดส่งสำเร็จ</span><span class="val num" style="color:var(--out)">${pend.length}</span><span class="sub">ใบงาน · กดเพื่อดู</span></button>
+   <div class="kpi warn"><span class="lbl">ไม่มีหลักฐาน</span><span class="val num">${noEv.length}</span><span class="sub">ใบงาน · กดรหัสเพื่อดู</span><div class="chips">${shown.map(r=>`<span class="chip" role="button" tabindex="0" data-job="${esc(r.id)}" data-t="${r.type}">${esc(r.id)}</span>`).join("")}${noEv.length>shown.length?`<span class="chip" data-more="1">+${noEv.length-shown.length}</span>`:""}</div></div>`;
+  $("#k-pend").onclick=()=>{view="out";setSeg("seg-type","out");filter="pending";$("#q").value="";renderTable();$("#tbl").scrollIntoView({behavior:"smooth",block:"center"})};
+  document.querySelectorAll("#kpis .chip").forEach(c=>c.onclick=()=>{
+    if(c.dataset.more){view="in";setSeg("seg-type","in");filter="noev";$("#q").value=""}
+    else{view=c.dataset.t;setSeg("seg-type",view);filter="all";$("#q").value=c.dataset.job}
+    renderTable();$("#tbl").scrollIntoView({behavior:"smooth",block:"center"})});
+}
+
+// ---------- ตาราง ----------
+let currentTSV="";
+function renderTable(){
+  const flt=$("#flt");
+  const opts=view==="in"?[["all","ทั้งหมด"],["noev","ไม่มีหลักฐาน"]]:view==="out"?[["all","ทั้งหมด"],["pending","รอส่งสำเร็จ"],["done","ส่งสำเร็จ"],["noev","ไม่มีหลักฐาน"]]:[];
+  flt.hidden=view==="stock";$("#q").hidden=view==="stock";
+  flt.innerHTML=opts.map(([v,l])=>`<option value="${v}" ${v===filter?"selected":""}>${l}</option>`).join("");
+  if(view==="stock")return renderStock();
+  const q=$("#q").value.trim().toLowerCase();
+  let rs=DB.records.filter(r=>r.type===view).sort((a,b)=>key(b.date).localeCompare(key(a.date))||b.id.localeCompare(a.id));
+  if(filter==="pending")rs=rs.filter(r=>r.status==="pending");
+  if(filter==="done")rs=rs.filter(r=>r.status==="done");
+  if(filter==="noev")rs=rs.filter(r=>r.status==="done"&&!hasEv(r));
+  if(q)rs=rs.filter(r=>(r.id+" "+r.branch+" "+r.lines.map(l=>l[0]).join(" ")+" "+r.note).toLowerCase().includes(q));
+  const isIn=view==="in",g=isIn?"colgrp-in":"colgrp-out";
+  const h=isIn?["วันที่รับเข้า","รหัสวัสดุ","ชื่อวัสดุ","รับมาจาก","จำนวนรับเข้า","หน่วยนับ","ผู้บันทึก","หมายเหตุ"]:["วันที่จ่ายออก","รหัสวัสดุ","ชื่อวัสดุ","สาขาที่รับวัสดุ","จำนวนที่ส่ง","หน่วยนับ","ผู้บันทึก","หมายเหตุ"];
+  const tsv=[];let rows="";
+  rs.forEach(r=>{r.lines.forEach((ln,i)=>{
+    const line=tsvLine(r,ln);tsv.push(line);
+    const st=isIn?"":(r.status==="pending"?(i===0?`<button class="btn sm out" data-done="${esc(r.id)}">ส่งสำเร็จ</button>`:`<span class="pill wait">รอส่ง</span>`):`<span class="pill ok">สำเร็จ</span>`);
+    const ev=hasEv(r)?(r.ev.startsWith("#demo")?`<button class="link" data-demo-ev="1">ดูหลักฐาน</button>`:`<a href="${esc(r.ev)}" target="_blank" rel="noopener">ดูหลักฐาน</a>`)
+             :(r.status==="pending"?`<span class="dim">—</span>`:`<span class="pill bad">ไม่มี</span>`);
+    rows+=`<tr class="${i===0?"job-start":""}"><td class="num">${esc(r.date)}</td><td class="num">${esc(codeOf(ln[0]))}</td><td>${esc(ln[0])}</td><td>${esc(r.branch)}</td><td class="r num">${fmt(ln[1])}</td><td>${esc(unitOf(ln[0]))}</td><td>${esc(r.by)}</td><td>${esc(r.note)}</td><td class="dim num">${esc(r.id)}</td>${isIn?"":`<td>${st}</td>`}<td>${ev}</td><td><button class="btn sm" data-copy="${esc(line)}">คัดลอกแถว</button></td></tr>`;
+  })});
+  currentTSV=tsv.join("\n");
+  $("#tbl").innerHTML=rs.length?`<table><thead><tr>${h.map((x,i)=>`<th class="${g} ${i===4?"r":""}">${x}</th>`).join("")}<th>ใบงาน</th>${isIn?"":"<th>สถานะ</th>"}<th>หลักฐาน</th><th></th></tr></thead><tbody>${rows}</tbody></table>`:`<div class="empty">${DB.records.length?"ไม่มีรายการตามที่กรอง":"ยังไม่มีบันทึก · กดปุ่มด้านบนเพื่อเริ่มบันทึก"}</div>`;
+  $("#tbl").querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>copyText(b.dataset.copy,"คัดลอก 1 แถวแล้ว"));
+  $("#tbl").querySelectorAll("[data-demo-ev]").forEach(b=>b.onclick=()=>toast("ตัวจริงจะเปิดโฟลเดอร์ใบงานใน Google Drive"));
+  $("#tbl").querySelectorAll("[data-done]").forEach(b=>b.onclick=()=>openDone(b.dataset.done));
+}
+$("#copy-all").onclick=()=>{if(!currentTSV){toast("ไม่มีข้อมูลให้คัดลอก");return}copyText(currentTSV,`คัดลอก ${currentTSV.split("\n").length} แถวแล้ว`)};
+
+function renderStock(){
+  const s={};DB.items.forEach(i=>s[i.name]={i:0,o:0,p:0});
+  DB.records.forEach(r=>r.lines.forEach(([n,q])=>{const x=s[n]||(s[n]={i:0,o:0,p:0});if(r.type==="in")x.i+=q;else if(r.status==="done")x.o+=q;else x.p+=q}));
+  const tsv=[];
+  const rows=DB.items.map(it=>{const x=s[it.name],bal=x.i-x.o;tsv.push([it.code,it.name,it.unit,bal].join("\t"));
+    return `<tr><td class="num">${esc(it.code)}</td><td>${esc(it.name)}</td><td>${esc(it.unit)}</td><td class="r num">${fmt(x.i)}</td><td class="r num">${fmt(x.o)}</td><td class="r num">${x.p?`<span class="pill wait">${fmt(x.p)}</span>`:"<span class='dim'>0</span>"}</td><td class="r num" style="font-weight:600;${bal<0?"color:var(--warn)":""}">${fmt(bal)}</td></tr>`}).join("");
+  currentTSV=tsv.join("\n");
+  $("#tbl").innerHTML=`<table><thead><tr><th>Barcode</th><th>รายการ</th><th>หน่วยนับ</th><th class="r colgrp-in">รับเข้า</th><th class="r colgrp-out">ส่งออก (สำเร็จ)</th><th class="r">รอส่ง</th><th class="r">คงเหลือ</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ---------- สถิติ ----------
+function barHTML(entries,cls,unit){
+  if(!entries.length)return `<div class="dim" style="font-size:13.5px">ยังไม่มีข้อมูล</div>`;
+  const max=Math.max(...entries.map(e=>e[1]));
+  return entries.slice(0,6).map(([n,v])=>`<div class="brow"><span class="nm" title="${esc(n)}">${esc(n)}</span><div class="track"><div class="fill ${cls}" style="width:${(v/max*100).toFixed(1)}%"></div></div><span class="v num">${fmt(v)}</span></div>`).join("")+(unit?`<div class="dim" style="font-size:12.5px">หน่วย: ${esc(unit)}</div>`:"");
+}
+function renderDash(){
+  const it=$("#dash-item").value;
+  const agg=type=>{const m={};DB.records.filter(r=>r.type===type&&r.status==="done").forEach(r=>{
+    if(metric==="jobs")m[r.branch]=(m[r.branch]||0)+1;else r.lines.forEach(([n,q])=>{if(n===it)m[r.branch]=(m[r.branch]||0)+q})});
+    return Object.entries(m).sort((a,b)=>b[1]-a[1])};
+  const u=metric==="qty"?unitOf(it):"";
+  $("#bars-in").innerHTML=barHTML(agg("in"),"in",u);
+  $("#bars-out").innerHTML=barHTML(agg("out"),"out",u);
+}
+
+// ---------- ยืม–คืน ----------
+function ledger(){
+  const m=new Map();
+  const get=(b,n)=>{const k=b+"|"+n;if(!m.has(k))m.set(k,{branch:b,item:n,borrow:0,ret:0,adjIn:0,adjOut:0,hist:[]});return m.get(k)};
+  DB.records.forEach(r=>r.lines.forEach(([n,q])=>{
+    if(r.type==="out"&&r.status==="done"){const e=get(r.branch,n);e.borrow+=q;e.hist.push({d:r.date,k:"ยืม",q,c:"var(--out)",ref:r.id})}
+    if(r.type==="in"){const e=get(r.branch,n);e.ret+=q;e.hist.push({d:r.date,k:"คืน",q,c:"var(--in)",ref:r.id})}
+  }));
+  DB.adjs.filter(a=>a.active).forEach(a=>{
+    const x=get(a.to,a.item);x.adjIn+=a.qty;x.hist.push({d:a.date,k:"รับคืนแทน",q:a.qty,c:"var(--focus)",ref:a.from?`จาก ${a.from}${a.ref?" · "+a.ref:""}`:"เพิ่มยอดเอง"});
+    if(a.from){const y=get(a.from,a.item);y.adjOut+=a.qty;y.hist.push({d:a.date,k:"คืนแทนให้",q:-a.qty,c:"var(--warn)",ref:`${a.to}${a.ref?" · "+a.ref:""}`})}
+  });
+  const L=[];m.forEach(e=>{e.hist.sort((a,b)=>key(a.d).localeCompare(key(b.d)));e.net=e.ret+e.adjIn-e.adjOut;e.owe=e.borrow-e.net;L.push(e)});
+  return L;
+}
+function renderLoans(){
+  const it=$("#loan-item").value,q=$("#loan-q").value.trim().toLowerCase();
+  let L=ledger().filter(e=>!it||e.item===it);
+  const by={};L.forEach(e=>{const b=by[e.branch]||(by[e.branch]={b:0,r:0,o:0});b.b+=e.borrow;b.r+=e.net;b.o+=Math.max(e.owe,0)});
+  const top=f=>Object.entries(by).filter(([,v])=>v[f]>0).sort((x,y)=>y[1][f]-x[1][f])[0]||null;
+  const unit=it?unitOf(it):"รวมทุกหน่วย";
+  const card=(lbl,t,f,cls)=>`<div class="kpi ${cls}"><span class="lbl">${lbl}</span>${t?`<span class="val num">${fmt(t[1][f])}</span><span class="who" title="${esc(t[0])}">${esc(t[0])}</span>`:`<span class="val">–</span><span class="who dim">ยังไม่มี</span>`}<span class="sub">${esc(unit)}</span></div>`;
+  const totalOwe=Object.values(by).reduce((s,v)=>s+v.o,0),nOwe=Object.values(by).filter(v=>v.o>0).length;
+  $("#loan-kpis").innerHTML=card("ยืมเยอะสุด",top("b"),"b","out")+card("คืนเยอะสุด",top("r"),"r","in")+card("ค้างเยอะสุด",top("o"),"o","warn")+
+    `<div class="kpi"><span class="lbl">ค้างคืนทั้งหมด</span><span class="val num">${fmt(totalOwe)}</span><span class="who">${nOwe} สาขา</span><span class="sub">${esc(unit)}</span></div>`;
+
+  if(loanMode==="open")L=L.filter(e=>e.owe>0);
+  if(loanMode==="over")L=L.filter(e=>e.owe<0);
+  if(q)L=L.filter(e=>e.branch.toLowerCase().includes(q));
+  L.sort((a,b)=>by[b.branch].o-by[a.branch].o||a.branch.localeCompare(b.branch)||b.owe-a.owe);
+  let rows="",prev=null,idx=0;
+  L.forEach(e=>{const first=e.branch!==prev;prev=e.branch;const id="h"+(idx++);const u=unitOf(e.item);
+    const st=e.owe>0?`<span class="pill bad">ค้าง ${fmt(e.owe)}</span>`:e.owe<0?`<span class="pill wait">คืนเกิน ${fmt(-e.owe)}</span>`:`<span class="pill ok">คืนครบ</span>`;
+    const adj=e.adjIn-e.adjOut;
+    rows+=`<tr class="${first?"br-first":""}"><td><button class="tog" data-h="${id}" aria-expanded="false" aria-label="ดูประวัติ">▸</button></td><td class="branch">${first?esc(e.branch):""}</td><td>${esc(e.item)}</td><td class="r num">${fmt(e.borrow)}</td><td class="r num">${fmt(e.ret)}</td><td class="r num" style="color:var(--focus)">${adj?(adj>0?"+":"")+fmt(adj):"<span class='dim'>0</span>"}</td><td class="r num">${fmt(e.net)}</td><td class="r num" style="font-weight:600">${fmt(Math.max(e.owe,0))}</td><td>${esc(u)}</td><td>${st}</td></tr>
+    <tr class="hist" id="${id}" hidden><td></td><td colspan="9"><ul>${e.hist.map(h=>`<li><span class="num">${esc(h.d)}</span> · <b style="color:${h.c}">${h.k}</b> ${fmt(Math.abs(h.q))} ${esc(u)} <span class="dim">· ${esc(h.ref)}</span></li>`).join("")}</ul></td></tr>`;
+  });
+  const emptyMsg={open:"ไม่มีสาขาที่ค้างคืน",over:"ไม่มีสาขาที่คืนเกิน",all:"ยังไม่มีข้อมูลยืม–คืน"}[loanMode];
+  $("#loan-tbl").innerHTML=L.length?`<table><thead><tr><th></th><th>สาขา</th><th>วัสดุ</th><th class="r colgrp-out">ยืมไป</th><th class="r colgrp-in">รับเข้าจากสาขานี้</th><th class="r">คืนแทน (+/−)</th><th class="r">นับเป็นคืน</th><th class="r">ค้าง</th><th>หน่วย</th><th>สถานะ</th></tr></thead><tbody>${rows}</tbody></table>`:`<div class="empty">${emptyMsg}</div>`;
+  $("#loan-tbl").querySelectorAll("[data-h]").forEach(b=>b.onclick=()=>{const r=document.getElementById(b.dataset.h);r.hidden=!r.hidden;b.textContent=r.hidden?"▸":"▾";b.setAttribute("aria-expanded",String(!r.hidden))});
+  renderAdjHist();
+}
+function renderAdjHist(){
+  const q=$("#adj-q").value.trim().toLowerCase();
+  let A=[...DB.adjs].sort((a,b)=>key(b.date).localeCompare(key(a.date))||b.id.localeCompare(a.id));
+  if(q)A=A.filter(a=>(a.from+" "+a.to+" "+a.item+" "+a.note+" "+a.ref).toLowerCase().includes(q));
+  const rows=A.map(a=>`<tr class="${a.active?"":"off"}"><td class="num">${esc(a.date)}</td><td>${a.from?esc(a.from):"<span class='dim'>— เพิ่มยอดเอง</span>"}</td><td class="dim">→</td><td style="font-weight:600">${esc(a.to)}</td><td>${esc(a.item)}</td><td class="r num">${fmt(a.qty)}</td><td>${esc(unitOf(a.item))}</td><td class="dim num">${esc(a.ref)}</td><td>${esc(a.note)}</td><td class="dim num">${esc(a.id)}</td><td>${a.active?`<button class="btn sm" data-cancel="${esc(a.id)}">ยกเลิก</button>`:`<span class="pill mute">ยกเลิกแล้ว</span>`}</td></tr>`).join("");
+  $("#adj-tbl").innerHTML=A.length?`<table><thead><tr><th>วันที่</th><th>สาขาที่ส่งมาแทน</th><th></th><th>คืนแทนให้สาขา</th><th>วัสดุ</th><th class="r">จำนวน</th><th>หน่วย</th><th>อ้างอิงใบงาน</th><th>หมายเหตุ</th><th>รหัส</th><th></th></tr></thead><tbody>${rows}</tbody></table>`:`<div class="empty">ยังไม่มีการบันทึกคืนแทน</div>`;
+  $("#adj-tbl").querySelectorAll("[data-cancel]").forEach(b=>b.onclick=async()=>{
+    if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="ยืนยันยกเลิก";b.classList.add("danger");setTimeout(()=>{if(b.isConnected){b.dataset.armed="";b.textContent="ยกเลิก";b.classList.remove("danger")}},3500);return}
+    try{await busy(b,"กำลังยกเลิก…",()=>call("cancelAdj",{id:b.dataset.cancel}));toast("ยกเลิกคืนแทนแล้ว")}catch(e){toast(e.message)}
+  });
+}
+
+// ---------- modal ----------
+function modal(title,body,foot){
+  const root=$("#modal-root");
+  root.innerHTML=`<div class="overlay"><div class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="m-head"><h3>${esc(title)}</h3><button class="x" aria-label="ปิด">×</button></div><div class="m-body">${body}</div>${foot?`<div class="m-foot">${foot}</div>`:""}</div></div>`;
+  const close=()=>root.innerHTML="";
+  root.querySelector(".x").onclick=close;
+  root.querySelector(".overlay").addEventListener("mousedown",e=>{if(e.target.classList.contains("overlay"))close()});
+  const f=root.querySelector(".m-body input,.m-body select");if(f)f.focus();
+  return {close};
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#modal-root").innerHTML=""});
+const itemOpts=sel=>DB.items.map(i=>`<option ${i.name===sel?"selected":""}>${esc(i.name)}</option>`).join("");
+
+// ---------- บันทึกรับ / ส่ง ----------
+function openForm(type){
+  const isIn=type==="in";
+  const body=`
+   <div class="row2">
+     <div class="field"><label for="f-date">${isIn?"วันที่รับเข้า":"วันที่จ่ายออก"}</label><input type="date" id="f-date" value="${TODAY}"></div>
+     <div class="field"><label for="f-by">ผู้บันทึก</label><input type="text" id="f-by" value="${esc(store.get("stock_by"))}" placeholder="ชื่อผู้บันทึก"></div>
+   </div>
+   <div class="field"><label for="f-br">${isIn?"รับมาจาก":"สาขาที่รับวัสดุ"}</label>
+     <input type="text" id="f-br" list="branches" placeholder="พิมพ์รหัสหรือชื่อ เช่น BPU หรือ บางปู" autocomplete="off">
+     <span class="hint">รายชื่อดึงจากแผ่นงาน “สาขา” (${fmt(DB.branches.length)} สาขา) · ถ้าไม่มีในรายการ ระบบจะเพิ่มเข้าแผ่นงานให้</span>
+     <span class="newbr" id="f-new" hidden>+ สาขาใหม่ จะถูกเพิ่มเข้าแผ่นงาน “สาขา”</span>
+   </div>
+   <div class="field"><span class="lab">รายการวัสดุ</span><div class="lines" id="f-lines"></div><button class="btn sm" id="f-add" style="align-self:flex-start">+ เพิ่มรายการ</button></div>
+   <div class="field"><label for="f-note">หมายเหตุ</label><input type="text" id="f-note" placeholder="ไม่บังคับ"></div>
+   ${isIn?`<div class="field"><span class="lab">หลักฐาน (ไม่บังคับ)</span><div class="drop">ถ่ายรูปหรือเลือกไฟล์ · เก็บในโฟลเดอร์ชื่อใบงานบนไดรฟ์<br><input type="file" id="f-ev" accept="image/*,application/pdf" multiple></div></div>`
+         :`<div class="note">ส่งออกจะอยู่สถานะ <b>รอส่ง</b> ก่อน · เมื่อของถึงแล้วให้กด <b>ส่งสำเร็จ</b> ในตาราง แล้วอัปโหลดหลักฐานหรือกด “ไม่มีหลักฐาน”</div>`}`;
+  const m=modal(isIn?"บันทึกรับวัสดุเข้า":"บันทึกส่งวัสดุออก",body,`<button class="btn" id="f-cancel">ยกเลิก</button><button class="btn ${type}" id="f-save">บันทึก</button>`);
+  const lines=$("#f-lines");
+  const addLine=()=>{const d=document.createElement("div");d.className="line";const first=DB.items[0]?DB.items[0].name:"";
+    d.innerHTML=`<select aria-label="วัสดุ">${itemOpts(first)}</select><input type="number" min="1" inputmode="numeric" placeholder="จำนวน" aria-label="จำนวน"><span class="u">${esc(unitOf(first))}</span><button class="rm" aria-label="ลบรายการ">×</button>`;
+    const s=d.querySelector("select");s.onchange=()=>d.querySelector(".u").textContent=unitOf(s.value);
+    d.querySelector(".rm").onclick=()=>{if(lines.children.length>1)d.remove()};lines.appendChild(d);d.querySelector("input").focus()};
+  addLine();$("#f-date").focus();$("#f-add").onclick=addLine;
+  $("#f-br").oninput=e=>{const v=e.target.value.trim();$("#f-new").hidden=!v||BR.has(v)};
+  $("#f-cancel").onclick=m.close;
+  $("#f-save").onclick=async e=>{
+    const br=$("#f-br").value.trim(),by=$("#f-by").value.trim();
+    const ls=[...lines.children].map(d=>({name:d.querySelector("select").value,qty:Number(d.querySelector("input").value)})).filter(l=>l.qty>0);
+    if(!br){$("#f-br").focus();toast("กรอกสาขาก่อน");return}
+    if(!ls.length){toast("ใส่จำนวนอย่างน้อย 1 รายการ");return}
+    store.set("stock_by",by);
+    try{
+      await busy(e.currentTarget,"กำลังบันทึก…",async()=>{
+        const files=isIn?await toPayload([...($("#f-ev").files||[])]):[];
+        const res=await call("addRecord",{type,date:isoToTh($("#f-date").value||TODAY),branch:br,by,note:$("#f-note").value.trim(),lines:ls,files});
+        m.close();
+        view=type;setSeg("seg-type",type);filter="all";$("#q").value="";renderTable();
+        const rec=DB.records.find(r=>r.id===res.id);if(rec)showCopy(rec);
+      });
+    }catch(err){toast("บันทึกไม่สำเร็จ: "+err.message)}
+  };
+}
+function showCopy(r){
+  const txt=r.lines.map(l=>tsvLine(r,l)).join("\n");
+  const m=modal(`บันทึกแล้ว · ${r.id}`,`
+    <div class="note">ข้อมูลเข้าชีตหลังบ้านแล้ว${hasEv(r)?` · หลักฐานอยู่ในโฟลเดอร์ <b>${esc(r.id)}</b>`:""}<br>คัดลอกข้อความนี้ไปวางในชีต Lark ที่ช่อง <b>${r.type==="in"?"F (วันที่รับเข้า)":"O (วันที่จ่ายออก)"}</b> ของแถวว่างแถวแรก</div>
+    <textarea class="tsv" readonly id="c-txt" aria-label="ข้อความสำหรับวาง">${esc(txt)}</textarea>`,
+    `<button class="btn" id="c-later">ไว้คัดลอกจากตารางทีหลัง</button><button class="btn solid" id="c-copy">คัดลอก ${r.lines.length} แถว</button>`);
+  $("#c-later").onclick=m.close;
+  $("#c-copy").onclick=()=>{copyText(txt);m.close()};
+}
+
+// ---------- ส่งสำเร็จ ----------
+function openDone(id){
+  const r=DB.records.find(x=>x.id===id);if(!r)return;
+  const m=modal(`ส่งสำเร็จ · ${r.id}`,`
+    <div class="note"><b>${esc(r.branch)}</b> · ${esc(r.date)}<br>${r.lines.map(([n,q])=>`${esc(n)} ${fmt(q)} ${esc(unitOf(n))}`).join(" · ")}</div>
+    <div class="field"><span class="lab">หลักฐานการส่ง</span><div class="drop">รูปของที่ส่ง / ใบเซ็นรับ / แชทยืนยัน<br><input type="file" id="d-ev" accept="image/*,application/pdf" multiple></div></div>
+    <div class="field"><span class="lab">จะเก็บไว้ที่</span><div class="path">${ROOT_FOLDER} / ${esc(r.id)} / ${esc(r.id)}_1.jpg …</div></div>`,
+    `<button class="btn" id="d-none">ส่งสำเร็จ · ไม่มีหลักฐาน</button><button class="btn out" id="d-up" disabled>อัปโหลดและยืนยันส่งสำเร็จ</button>`);
+  $("#d-ev").onchange=e=>$("#d-up").disabled=!e.target.files.length;
+  $("#d-none").onclick=async e=>{try{await busy(e.currentTarget,"กำลังบันทึก…",()=>call("markDone",{id:r.id,noEv:true}));m.close();toast(`${r.id} ส่งสำเร็จ (ไม่มีหลักฐาน)`)}catch(err){toast(err.message)}};
+  $("#d-up").onclick=async e=>{const fl=[...$("#d-ev").files];try{await busy(e.currentTarget,"กำลังอัปโหลด…",async()=>call("markDone",{id:r.id,files:await toPayload(fl)}));m.close();toast(`${r.id} ส่งสำเร็จ · อัปโหลด ${fl.length} ไฟล์`)}catch(err){toast(err.message)}};
+}
+
+// ---------- คืนแทน ----------
+function openAdj(){
+  const m=modal("บันทึกคืนแทน",`
+    <div class="note">ใช้เมื่อ <b>สาขาหนึ่งส่งของมาคืนแทนอีกสาขา</b> · ย้ายยอดคืนเฉพาะในหน้ายืม–คืน บันทึกรับเข้าและสต็อกไม่เปลี่ยน</div>
+    <div class="field"><label for="a-from">สาขาที่ส่งของมาแทน</label><input type="text" id="a-from" list="branches" autocomplete="off" placeholder="เช่น BBO_SP-บางบ่อ">
+      <span class="hint">เว้นว่างได้ ถ้าแค่ต้องการเพิ่มยอดคืนให้สาขาเอง (ไม่หักจากใคร)</span></div>
+    <div class="field" id="a-pick-wrap" hidden><span class="lab">เลือกจากบันทึกรับเข้าของสาขานี้</span><div class="picks" id="a-picks"></div></div>
+    <div class="row2">
+      <div class="field"><label for="a-item">วัสดุ</label><select id="a-item">${itemOpts(DB.items[0]?.name)}</select></div>
+      <div class="field"><label for="a-qty">จำนวน</label><input type="number" id="a-qty" min="1" inputmode="numeric"></div>
+    </div>
+    <div class="field"><label for="a-to">คืนแทนให้สาขา (สาขาที่ยืมไป)</label><input type="text" id="a-to" list="owers" autocomplete="off" placeholder="พิมพ์ชื่อสาขา"><span class="hint" id="a-to-hint"></span></div>
+    <div class="row2">
+      <div class="field"><label for="a-date">วันที่</label><input type="date" id="a-date" value="${TODAY}"></div>
+      <div class="field"><label for="a-ref">อ้างอิงใบงาน</label><input type="text" id="a-ref" placeholder="ไม่บังคับ"></div>
+    </div>
+    <div class="field"><label for="a-note">หมายเหตุ</label><input type="text" id="a-note" placeholder="เช่น บางบ่อส่งคืนแทนบางปู"></div>
+    <div class="effect" id="a-effect"></div>`,
+    `<button class="btn" id="a-cancel">ยกเลิก</button><button class="btn solid" id="a-save">บันทึกคืนแทน</button>`);
+  const L=ledger();
+  const refreshOwers=()=>{const it=$("#a-item").value;const ow=L.filter(e=>e.item===it&&e.owe>0).sort((a,b)=>b.owe-a.owe);
+    $("#owers").innerHTML=ow.map(e=>`<option value="${esc(e.branch)}" label="ค้าง ${fmt(e.owe)} ${esc(unitOf(it))}">`).join("");
+    $("#a-to-hint").textContent=ow.length?`สาขาที่ค้าง${it}: ${ow.slice(0,3).map(e=>`${e.branch} (${fmt(e.owe)})`).join(", ")}${ow.length>3?" …":""}`:`ตอนนี้ไม่มีสาขาไหนค้าง${it}`};
+  const effect=()=>{const q=Number($("#a-qty").value)||0,f=$("#a-from").value.trim(),t=$("#a-to").value.trim(),it=$("#a-item").value,u=unitOf(it);
+    $("#a-effect").innerHTML=q&&t?`<span>ผลที่จะเกิดในหน้ายืม–คืน (${esc(it)}):</span><span class="plus">${esc(t)} ยอดคืน +${fmt(q)} ${esc(u)}</span>${f?`<span class="minus">${esc(f)} ยอดคืน −${fmt(q)} ${esc(u)}</span>`:""}<span class="dim">บันทึกรับเข้าเดิมไม่เปลี่ยน</span>`:`<span class="dim">กรอกวัสดุ จำนวน และสาขาที่ยืม เพื่อดูผล</span>`};
+  const picks=()=>{const f=$("#a-from").value.trim();const recs=DB.records.filter(r=>r.type==="in"&&r.branch===f).sort((a,b)=>key(b.date).localeCompare(key(a.date)));
+    $("#a-pick-wrap").hidden=!recs.length;
+    $("#a-picks").innerHTML=recs.flatMap(r=>r.lines.map(([n,q])=>`<button class="pick" aria-pressed="false" data-r="${esc(r.id)}" data-n="${esc(n)}" data-q="${q}" data-d="${esc(r.date)}">${esc(r.date)} · ${esc(n)} ${fmt(q)} <span class="dim">${esc(r.id)}</span></button>`)).join("");
+    $("#a-picks").querySelectorAll(".pick").forEach(b=>b.onclick=()=>{$("#a-picks").querySelectorAll(".pick").forEach(x=>x.setAttribute("aria-pressed",x===b));
+      $("#a-item").value=b.dataset.n;$("#a-qty").value=b.dataset.q;$("#a-ref").value=b.dataset.r;const[d,mo,y]=b.dataset.d.split("/");if(y)$("#a-date").value=`${y}-${mo.padStart(2,"0")}-${d.padStart(2,"0")}`;refreshOwers();effect()})};
+  $("#a-from").oninput=()=>{picks();effect()};
+  $("#a-item").onchange=()=>{refreshOwers();effect()};
+  $("#a-qty").oninput=effect;$("#a-to").oninput=effect;
+  refreshOwers();effect();
+  $("#a-cancel").onclick=m.close;
+  $("#a-save").onclick=async e=>{
+    const q=Number($("#a-qty").value),to=$("#a-to").value.trim(),from=$("#a-from").value.trim();
+    if(!to||!(q>0)){toast("กรอกจำนวนและสาขาที่ยืมให้ครบ");return}
+    if(from&&from===to){toast("สาขาที่ส่งแทนกับสาขาที่ยืมต้องเป็นคนละสาขา");return}
+    try{await busy(e.currentTarget,"กำลังบันทึก…",()=>call("addAdj",{date:isoToTh($("#a-date").value||TODAY),item:$("#a-item").value,qty:q,from,to,ref:$("#a-ref").value.trim(),note:$("#a-note").value.trim()}));m.close();toast("บันทึกคืนแทนแล้ว")}
+    catch(err){toast(err.message)}
+  };
+}
+
+$("#btn-new-in").onclick=()=>openForm("in");
+$("#btn-new-out").onclick=()=>openForm("out");
+$("#btn-adj").onclick=openAdj;
+
+function renderAll(){renderKPI();renderTable();renderDash();renderLoans()}
+
+// ---------- โหมดตัวอย่าง ----------
+function demoData(){
+  const items=[["FEX00031","เทปใส","ม้วน"],["FEX04913","ซอง Flash A3","ซอง"],["FEX04914","ซอง Flash A4","ซอง"],["FEX00126","เคเบิลไทร์","ถุง"],["FEX01120","เลเบลใหญ่","แพ็ค"],["FEX04702","เลเบลเล็ก","แพ็ค"],["FEX05347","ซิลล็อครถ","ถุง"],["FEX00160","กล่อง M+","กล่อง"],["FEX00161","กล่อง L","กล่อง"],["FEX00162","กล่อง M","กล่อง"],["FEX00165","กล่อง Mini","กล่อง"],["FEX00166","กล่อง S","กล่อง"],["FEX00167","กล่อง S+","กล่อง"],["FEX03944","กล่องผลไม้ S+","กล่อง"],["FEX03945","กล่องผลไม้ M","กล่อง"],["FEX03946","กล่องผลไม้ M+","กล่อง"],["FEX03947","กล่องผลไม้ L","กล่อง"],["FEX04520","บับเบิ้ล","ม้วน"],["FEX05471","ฟิล์มยืด","ม้วน"]].map(([code,name,unit])=>({code,name,unit}));
+  const branches=["2WTL_BDC-วังทองหลาง","2BPU_BDC-บางปู","2PKS_BDC-แพรกษา","BBO_SP-บางบ่อ","BPL_SP-บางพลี","SRG_SP-สำโรง","GKW_SP-กิ่งแก้ว","2BNA_BDC-บางนา","BNA_SP-บางนา","BGI_SP-บางนาใต้","SRT_SP-สำโรงใต้","SRN_SP-สำโรงเหนือ","PNM_SP-ปากน้ำ","TPR_SP-เทพารักษ์","5BST_PDC-บางเสาธง","09 NE2_HUB-ขอนแก่น","22 PDT_BHUB-บ่อวิน","65 WNO_BHUB-วังน้อย"];
+  const R=(id,type,date,branch,lines,ev,status,note)=>({id,type,date,branch,lines,by:"Best",note:note||"",status:status||"done",ev:ev});
+  const records=[
+    R("IN-261001-001","in","01/10/2026","2WTL_BDC-วังทองหลาง",[["เทปใส",144],["กล่อง S",200]],"#demo"),
+    R("OUT-261003-001","out","03/10/2026","2BPU_BDC-บางปู",[["เทปใส",144],["กล่อง S",100]],"#demo"),
+    R("OUT-261005-001","out","05/10/2026","2PKS_BDC-แพรกษา",[["กล่อง S",80],["ซอง Flash A3",100],["เลเบลเล็ก",10]],NO_EV),
+    R("IN-261008-001","in","08/10/2026","22 PDT_BHUB-บ่อวิน",[["เคเบิลไทร์",10]],NO_EV),
+    R("OUT-261009-001","out","09/10/2026","09 NE2_HUB-ขอนแก่น",[["เทปใส",72],["ฟิล์มยืด",6]],"#demo","done","ฝากรถเที่ยวเช้า"),
+    R("OUT-261012-001","out","12/10/2026","SRG_SP-สำโรง",[["ซิลล็อครถ",2],["เคเบิลไทร์",3]],"#demo"),
+    R("IN-261015-001","in","15/10/2026","2BPU_BDC-บางปู",[["เทปใส",72]],"#demo"),
+    R("IN-261016-001","in","16/10/2026","BBO_SP-บางบ่อ",[["เทปใส",72]],"#demo","done","คืนแทนบางปู"),
+    R("OUT-261017-001","out","17/10/2026","2BPU_BDC-บางปู",[["ฟิล์มยืด",4]],NO_EV),
+    R("IN-261018-001","in","18/10/2026","2PKS_BDC-แพรกษา",[["กล่อง S",50],["ซอง Flash A3",100]],NO_EV),
+    R("IN-261019-001","in","19/10/2026","2WTL_BDC-วังทองหลาง",[["เทปใส",144]],"#demo"),
+    R("OUT-261019-001","out","19/10/2026","09 NE2_HUB-ขอนแก่น",[["เทปใส",144]],"","pending"),
+    R("OUT-261020-001","out","20/10/2026","GKW_SP-กิ่งแก้ว",[["กล่อง M",40],["เทปใส",24]],"","pending")
+  ];
+  const adjs=[{id:"ADJ-261016-001",date:"16/10/2026",item:"เทปใส",qty:72,from:"BBO_SP-บางบ่อ",to:"2BPU_BDC-บางปู",ref:"IN-261016-001",note:"บางบ่อส่งคืนแทนบางปู",active:true}];
+  return {items,branches,records,adjs,at:""};
+}
+function demoCall(action,p){
+  const nid=(prefix,list)=>{const n=list.filter(x=>x.id.startsWith(prefix)).length+1;return prefix+String(n).padStart(3,"0")};
+  const ymd=th=>{const[d,m,y]=th.split("/");return y.slice(2)+m+d};
+  if(action==="addRecord"){
+    if(!DB.branches.includes(p.branch))DB.branches.push(p.branch);
+    const id=nid((p.type==="in"?"IN-":"OUT-")+ymd(p.date)+"-",DB.records);
+    DB.records.push({id,type:p.type,date:p.date,branch:p.branch,lines:p.lines.map(l=>[l.name,l.qty]),by:p.by,note:p.note,status:p.type==="in"?"done":"pending",ev:p.type==="in"?(p.files.length?"#demo":NO_EV):""});
+    return {id};
+  }
+  if(action==="markDone"){const r=DB.records.find(x=>x.id===p.id);r.status="done";r.ev=p.noEv?NO_EV:"#demo";return {id:p.id}}
+  if(action==="addAdj"){const id=nid("ADJ-"+ymd(p.date)+"-",DB.adjs);DB.adjs.push(Object.assign({id,active:true},p));return {id}}
+  if(action==="cancelAdj"){const a=DB.adjs.find(x=>x.id===p.id);if(a)a.active=false;return {id:p.id}}
+}
+
+load();
+})();
+</script>
+</body>
+</html>
